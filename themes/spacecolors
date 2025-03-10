@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Overlay</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300..800&display=swap');
+
+body,
+html {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(10, 22, 40, 0.8);
+	font-family: 'Host Grotesk', sans-serif;
+	background-color: #0000;
+}
+
+#chat-container {
+	padding-top: 25px;
+	margin: 0px;
+	display: block;
+	overflow: visible;
+	width: 400px;
+	min-width: 400px;
+	position: fixed;
+	top: 0;
+	left: 0;
+}
+
+.message-container {
+	position: relative;
+	margin-bottom: 20px;
+	min-width: 400px;
+	padding-top: 15px;
+	opacity: 0;
+	transform: translateY(-20px);
+	animation: slideFadeIn 0.5s ease forwards;
+}
+
+@keyframes slideFadeIn {
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+</style>
+<script src="./chroma.min.cjs"></script>
+</head>
+<body>
+    <div id="chat-container"></div>
+    <script>
+    var urlParams = new URLSearchParams(window.location.search);
+    var roomID = "4DP7Stjuew";
+    if (urlParams.has("session")) {
+        roomID = urlParams.get("session");
+    }
+    var password = "false";
+    var featuredMode = false;
+
+    const chatContainer = document.getElementById('chat-container');
+
+    function addMessageToOverlay(data) {
+        const messageContainer = document.createElement('div');
+        messageContainer.classList.add('message-container');
+        
+        const messageDiv = document.createElement('div');
+        if (data.mid) messageDiv.id = data.mid;
+
+        messageDiv.innerHTML = `
+            <div class="username-box" style="background: linear-gradient(90deg, ${chroma(data.nameColor || "#555").desaturate(1).alpha(0.9)}, ${chroma(data.nameColor || "#555").desaturate(2).alpha(0.9)});">
+                ${data.chatimg ? `<div class="avatar-wrapper"><div class="avatar" style="background-image: url('${data.chatimg}');"></div></div>` : ''}
+                <span>${data.chatname}</span>
+            </div>
+            <div class="message" style="background: linear-gradient(90deg, ${chroma(data.nameColor || "#555").desaturate(4).darken(1).alpha(0.8)}, ${chroma(data.nameColor || "#555").desaturate(3).darken(1).alpha(0.8)})">
+                <div class="text">${data.chatmessage || ''}${(data.donation||data.hasDonation) ? `<div class="donation">${(data.donation||data.hasDonation)}</div>` : ''}</div>
+            </div>
+        `;
+
+        messageContainer.appendChild(messageDiv);
+        chatContainer.prepend(messageContainer);
+    }
+
+    var iframe = document.createElement("iframe");
+    iframe.src = "https://vdo.socialstream.ninja/?ln&salt=vdo.ninja&password="+password+"&push&label=dock&vd=0&ad=0&novideo&noaudio&autostart&cleanoutput&room="+roomID; 
+    iframe.style.cssText = "width: 0px; height: 0px; position: fixed; left: -100px; top: -100px; overflow: hidden;";
+    document.body.appendChild(iframe);
+
+    window.addEventListener("message", function (e) {
+        if (e.source != iframe.contentWindow) return;
+        if (e.data.dataReceived && e.data.dataReceived.overlayNinja) {
+            addMessageToOverlay(e.data.dataReceived.overlayNinja);
+        }
+    });
+</script>
+</body>
+</html>
